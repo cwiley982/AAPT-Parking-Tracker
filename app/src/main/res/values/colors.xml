@@ -5,6 +5,4 @@
 
     <color name="relay_blue">#FF102A3C</color>
     <color name="relay_teal">#00C9E3</color>
-
-    <color name="ic_launcher_background">@color/relay_blue</color>
 </resources>
