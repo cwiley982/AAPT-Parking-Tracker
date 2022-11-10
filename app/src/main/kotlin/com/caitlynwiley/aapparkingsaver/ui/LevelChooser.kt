@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -19,7 +20,7 @@ fun DeckLevelOptions() {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             BasicText(
                 text = "Select which level you parked on today:",
-                style = chooseLevelPrompt
+                style = chooseLevelPrompt.copy(color = MaterialTheme.colorScheme.onBackground)
             )
         }
 
@@ -30,8 +31,6 @@ fun DeckLevelOptions() {
                 DeckLevelButton(level)
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -42,13 +41,13 @@ fun DeckLevelButton(level: Int) {
 
     Button(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
+            .padding(8.dp)
+            .fillMaxSize(),
         colors = ButtonDefaults.buttonColors(containerColor = levelColor),
         onClick = {
             vm.updateParkingLevel(level)
         }
     ) {
-        BasicText(text = "$level", style = levelOptionsStyle)
+        BasicText(modifier = Modifier.wrapContentHeight(), text = "$level", style = levelOptionsStyle)
     }
 }
