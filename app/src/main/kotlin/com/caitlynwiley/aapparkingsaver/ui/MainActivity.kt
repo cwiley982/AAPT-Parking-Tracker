@@ -1,30 +1,57 @@
 package com.caitlynwiley.aapparkingsaver.ui
 
+import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.caitlynwiley.aapparkingsaver.PermissionsRepo
 import com.caitlynwiley.aapparkingsaver.Prefs
-import com.caitlynwiley.aapparkingsaver.theme.*
+import com.caitlynwiley.aapparkingsaver.theme.AAPParkingSaverTheme
+import com.caitlynwiley.aapparkingsaver.theme.Level2Orange
+import com.caitlynwiley.aapparkingsaver.theme.Level3Blue
+import com.caitlynwiley.aapparkingsaver.theme.Level4Yellow
+import com.caitlynwiley.aapparkingsaver.theme.Level5Green
+import com.caitlynwiley.aapparkingsaver.theme.Level6Purple
+import com.caitlynwiley.aapparkingsaver.theme.Level7Red
+import com.caitlynwiley.aapparkingsaver.theme.Level8Blue
+import com.caitlynwiley.aapparkingsaver.theme.Level9Yellow
 import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
 import java.time.OffsetDateTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val prefs = Prefs(this)
 
         setContent {
             AAPParkingSaverTheme {
@@ -33,10 +60,33 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val vm by viewModels<ParkingViewModel>(
-                        factoryProducer = { ParkingViewModel.Factory(prefs) }
+                        factoryProducer = { ParkingViewModel.Factory(Prefs(this)) }
                     )
                     val savedParkingLevel by vm.parkingLevel
                     val timeLevelSaved by vm.lastUpdatedTimestamp
+                    var requestedPermissions by remember { mutableStateOf(false) }
+                    var requestedBackgroundPermission by remember { mutableStateOf(false) }
+                    val hasLocationPerms by vm.hasLocationPerms.collectAsState()
+                    val hasBackgroundPerm by vm.hasBackgroundPerm.collectAsState()
+
+                    if (!hasLocationPerms && !requestedPermissions) {
+                        println("requesting permissions via system launcher")
+                        requestedPermissions = true
+                        requestMultiPermissionLauncher.launch(arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))
+                    }
+
+                    if (hasLocationPerms && !hasBackgroundPerm && !requestedBackgroundPermission) {
+                        requestedBackgroundPermission = true
+                        if (shouldShowRequestPermissionRationale(ACCESS_BACKGROUND_LOCATION)) {
+                            BackgroundLocationRequestDialog {
+                                println("requesting background permission")
+                                requestSinglePermissionLauncher.launch(ACCESS_BACKGROUND_LOCATION)
+                            }
+                        } else {
+                            println("requesting background permission")
+                            requestSinglePermissionLauncher.launch(ACCESS_BACKGROUND_LOCATION)
+                        }
+                    }
 
                     if (isTimestampFromToday(timeLevelSaved) && savedParkingLevel in (2..9)) {
                         DisplayLevel(savedParkingLevel)
@@ -55,6 +105,42 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    fun BackgroundLocationRequestDialog(requestPermission: () -> Unit) {
+        val context = LocalContext.current
+        var dismissed by remember { mutableStateOf(false) }
+
+        if (!dismissed) {
+            AlertDialog(
+                onDismissRequest = {
+                    Toast.makeText(context, "but I neeeeed it... :(", Toast.LENGTH_LONG).show()
+                    dismissed = true
+                },
+                confirmButton = {
+                    Button(onClick = { requestPermission() }) {
+                        Text("Allow")
+                    }
+                },
+                title = {
+                    Text("me need your location >:D")
+                },
+                text = {
+                    Text("We need access to your location when the app is in the background to send reminders to save your parking when you arrive. Please select 'Allow all the time' on the next screen to let this app access your location in the background.")
+                }
+            )
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    val requestMultiPermissionLauncher = registerForActivityResult(RequestMultiplePermissions()) {
+        PermissionsRepo.recheckPermissions(this)
+    }
+
+    @SuppressLint("MissingPermission")
+    val requestSinglePermissionLauncher = registerForActivityResult(RequestPermission()) {
+        PermissionsRepo.recheckPermissions(this)
+    }
 }
 
 @Composable
@@ -69,7 +155,9 @@ fun IconTextButton(modifier: Modifier = Modifier, icon: ImageVector, iconDesc: S
         enabled = enabled,
         onClick = onClick
     ) {
-        Icon(modifier = Modifier.padding(end = 4.dp).requiredSize(24.dp), imageVector = icon, contentDescription = iconDesc)
+        Icon(modifier = Modifier
+            .padding(end = 4.dp)
+            .requiredSize(24.dp), imageVector = icon, contentDescription = iconDesc)
         Text(modifier = modifier.padding(end = 4.dp), text = text, fontSize = 18.sp)
     }
 }

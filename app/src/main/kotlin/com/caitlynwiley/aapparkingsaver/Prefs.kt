@@ -45,6 +45,14 @@ class Prefs {
         preferences.edit().putFloat(key, value).apply()
     }
 
+    fun getBool(key: String, default: Boolean = false): Boolean {
+        return preferences.getBoolean(key, default)
+    }
+
+    fun setBool(key: String, value: Boolean) {
+        preferences.edit().putBoolean(key, value).apply()
+    }
+
     fun remove(key: String) {
         preferences.edit().remove(key).apply()
     }
