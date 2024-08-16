@@ -1,8 +1,6 @@
 package com.caitlynwiley.aapparkingsaver.ui
 
-import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.Toast
@@ -10,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -35,8 +33,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.caitlynwiley.aapparkingsaver.PermissionsRepo
-import com.caitlynwiley.aapparkingsaver.Prefs
 import com.caitlynwiley.aapparkingsaver.theme.AAPParkingSaverTheme
 import com.caitlynwiley.aapparkingsaver.theme.Level2Orange
 import com.caitlynwiley.aapparkingsaver.theme.Level3Blue
@@ -46,7 +44,8 @@ import com.caitlynwiley.aapparkingsaver.theme.Level6Purple
 import com.caitlynwiley.aapparkingsaver.theme.Level7Red
 import com.caitlynwiley.aapparkingsaver.theme.Level8Blue
 import com.caitlynwiley.aapparkingsaver.theme.Level9Yellow
-import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
+import com.caitlynwiley.aapparkingsaver.theme.ThemeRepository
+import com.caitlynwiley.aapparkingsaver.ui.home.PermissionsViewModel
 import java.time.OffsetDateTime
 
 class MainActivity : ComponentActivity() {
@@ -54,53 +53,64 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AAPParkingSaverTheme {
+            val matchSystemTheme by ThemeRepository.useSystemTheme.collectAsState()
+            val darkModeEnabled by ThemeRepository.useDarkMode.collectAsState()
+            val systemInDarkMode = isSystemInDarkTheme()
+
+            val inDarkMode by remember (matchSystemTheme, darkModeEnabled) {
+                mutableStateOf(
+                    if (matchSystemTheme) systemInDarkMode
+                    else darkModeEnabled
+                )
+            }
+
+            AAPParkingSaverTheme(useDarkMode = inDarkMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val vm by viewModels<ParkingViewModel>(
-                        factoryProducer = { ParkingViewModel.Factory(Prefs(this)) }
+                    BaseScreen()
+
+                    PermissionsUi()
+                }
+            }
+        }
+    }
+
+    @SuppressLint("InlinedApi")
+    @Composable
+    fun PermissionsUi() {
+        val vm = viewModel<PermissionsViewModel>()
+        val permissionsRequired by vm.requireLocationPermissions.collectAsState()
+
+        if (permissionsRequired) {
+            val hasLocationPerms by vm.hasLocationPerms.collectAsState()
+            val hasBackgroundPerm by vm.hasBackgroundPerm.collectAsState()
+
+            var requestedPermissions by remember { mutableStateOf(false) }
+            var requestedBackgroundPermission by remember { mutableStateOf(false) }
+
+            if (!hasLocationPerms && !requestedPermissions) {
+                println("requesting permissions via system launcher")
+                requestedPermissions = true
+                requestMultiPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
                     )
-                    val savedParkingLevel by vm.parkingLevel
-                    val timeLevelSaved by vm.lastUpdatedTimestamp
-                    var requestedPermissions by remember { mutableStateOf(false) }
-                    var requestedBackgroundPermission by remember { mutableStateOf(false) }
-                    val hasLocationPerms by vm.hasLocationPerms.collectAsState()
-                    val hasBackgroundPerm by vm.hasBackgroundPerm.collectAsState()
+                )
+            }
 
-                    if (!hasLocationPerms && !requestedPermissions) {
-                        println("requesting permissions via system launcher")
-                        requestedPermissions = true
-                        requestMultiPermissionLauncher.launch(arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))
+            if (hasLocationPerms && !hasBackgroundPerm && !requestedBackgroundPermission) {
+                requestedBackgroundPermission = true
+                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                    BackgroundLocationRequestDialog {
+                        println("requesting background permission")
+                        requestSinglePermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                     }
-
-                    if (hasLocationPerms && !hasBackgroundPerm && !requestedBackgroundPermission) {
-                        requestedBackgroundPermission = true
-                        if (shouldShowRequestPermissionRationale(ACCESS_BACKGROUND_LOCATION)) {
-                            BackgroundLocationRequestDialog {
-                                println("requesting background permission")
-                                requestSinglePermissionLauncher.launch(ACCESS_BACKGROUND_LOCATION)
-                            }
-                        } else {
-                            println("requesting background permission")
-                            requestSinglePermissionLauncher.launch(ACCESS_BACKGROUND_LOCATION)
-                        }
-                    }
-
-                    if (isTimestampFromToday(timeLevelSaved) && savedParkingLevel in (2..9)) {
-                        DisplayLevel(savedParkingLevel)
-                    } else {
-                        // nothing saved for today
-                        var showNoLevelSavedMsg by remember { mutableStateOf(OffsetDateTime.now().hour >= 15) }
-
-                        if (showNoLevelSavedMsg) { // if it's after 3pm
-                            NoLevelSaved(dismiss = { showNoLevelSavedMsg = false })
-                        } else {
-                            // No level saved yet today, show level picker
-                            DeckLevelOptions()
-                        }
-                    }
+                } else {
+                    println("requesting background permission")
+                    requestSinglePermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 }
             }
         }
@@ -122,9 +132,7 @@ class MainActivity : ComponentActivity() {
                         Text("Allow")
                     }
                 },
-                title = {
-                    Text("me need your location >:D")
-                },
+                title = { Text("me need your location >:D") },
                 text = {
                     Text("We need access to your location when the app is in the background to send reminders to save your parking when you arrive. Please select 'Allow all the time' on the next screen to let this app access your location in the background.")
                 }
@@ -149,15 +157,20 @@ fun IconTextButton(modifier: Modifier = Modifier, icon: ImageVector, iconDesc: S
         modifier = modifier.padding(16.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
-            contentColor = Color.White),
+            contentColor = Color.White
+        ),
         border = BorderStroke(width = 2.dp, color = Color.White),
         contentPadding = PaddingValues(horizontal = 8.dp),
         enabled = enabled,
         onClick = onClick
     ) {
-        Icon(modifier = Modifier
-            .padding(end = 4.dp)
-            .requiredSize(24.dp), imageVector = icon, contentDescription = iconDesc)
+        Icon(
+            modifier = Modifier
+                .padding(end = 4.dp)
+                .requiredSize(24.dp),
+            imageVector = icon,
+            contentDescription = iconDesc
+        )
         Text(modifier = modifier.padding(end = 4.dp), text = text, fontSize = 18.sp)
     }
 }

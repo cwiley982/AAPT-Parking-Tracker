@@ -15,6 +15,13 @@ object PermissionsRepo {
     private val _hasBackgroundLocationPermission = MutableStateFlow(false)
     val hasBackgroundLocationPermission: StateFlow<Boolean> = _hasBackgroundLocationPermission
 
+    private val _requireLocationPermissions = MutableStateFlow(false)
+    val requireLocationPermissions: StateFlow<Boolean> = _requireLocationPermissions
+
+    init {
+        _requireLocationPermissions.value = Prefs.getBool("reminders_enabled")
+    }
+
     fun setHasLocationPermissions(hasPermissions: Boolean) {
         _hasLocationPermissions.value = hasPermissions
     }
@@ -23,13 +30,15 @@ object PermissionsRepo {
         _hasBackgroundLocationPermission.value = hasPermission
     }
 
+    fun setLocationPermissionsRequired(required: Boolean) {
+        _requireLocationPermissions.value = required
+    }
+
     fun recheckPermissions(context: Context) {
-        if (
+        setHasLocationPermissions(
             ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        ) {
-            setHasLocationPermissions(true)
-        }
+        )
 
         if (Build.VERSION.SDK_INT < 29) {
             setHasBackgroundLocationPermission(true)

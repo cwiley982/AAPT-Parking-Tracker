@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
+import com.caitlynwiley.aapparkingsaver.ui.home.ParkingViewModel
 
 @Composable
 fun BottomButtonRow() {

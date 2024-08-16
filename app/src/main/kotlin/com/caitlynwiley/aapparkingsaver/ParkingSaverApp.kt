@@ -11,8 +11,8 @@ class ParkingSaverApp: Application() {
     override fun onCreate() {
         super.onCreate()
 
+        Prefs.init(this)
         PermissionsRepo.recheckPermissions(this)
-
         GeofenceManager.init(this)
 
         val fbOptions = FirebaseOptions.Builder()

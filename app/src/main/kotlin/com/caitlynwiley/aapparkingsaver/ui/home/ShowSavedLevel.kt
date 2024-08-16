@@ -1,7 +1,11 @@
-package com.caitlynwiley.aapparkingsaver.ui
+package com.caitlynwiley.aapparkingsaver.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Text
@@ -16,7 +20,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
+import com.caitlynwiley.aapparkingsaver.ui.BottomButtonRow
+import com.caitlynwiley.aapparkingsaver.ui.IconTextButton
+import com.caitlynwiley.aapparkingsaver.ui.getBackgroundColor
 
 @Composable
 fun DisplayLevel(level: Int = 0) {

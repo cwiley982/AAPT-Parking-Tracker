@@ -15,8 +15,8 @@ import com.caitlynwiley.aapparkingsaver.Constants.LAUNCH_APP_REQ_CODE
 import com.caitlynwiley.aapparkingsaver.Constants.REMINDER_NOTIFICATION_CHANNEL_ID
 import com.caitlynwiley.aapparkingsaver.Constants.SAVE_PARKING_NOTIFICATION_ID
 import com.caitlynwiley.aapparkingsaver.Prefs
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.LEVEL_SAVED_TS
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.PARKING_DECK_LEVEL
+import com.caitlynwiley.aapparkingsaver.Prefs.LEVEL_SAVED_TS
+import com.caitlynwiley.aapparkingsaver.Prefs.PARKING_DECK_LEVEL
 import com.caitlynwiley.aapparkingsaver.R
 import com.caitlynwiley.aapparkingsaver.ui.MainActivity
 import com.caitlynwiley.aapparkingsaver.ui.isTimestampFromToday
@@ -49,20 +49,23 @@ class GeofenceReceiver: BroadcastReceiver() {
         Toast.makeText(context, "got broadcast, type: $transitionType", Toast.LENGTH_LONG).show()
         println("transition type: $transitionType")
 
-        val prefs = Prefs(context)
         if (transitionType == Geofence.GEOFENCE_TRANSITION_DWELL) {
             // don't write event to db, just post reminder to save their parking location if
             // they haven't already
 
-            if (isTimestampFromToday(prefs.getLong(LEVEL_SAVED_TS)) && prefs.getInt(PARKING_DECK_LEVEL) in 2..9) {
+            if (isTimestampFromToday(Prefs.getLong(LEVEL_SAVED_TS)) && Prefs.getInt(PARKING_DECK_LEVEL) in 2..9) {
                 // parking spot already saved, nothing to do here
+                return
+            }
+
+            val nm = context.getSystemService(ComponentActivity.NOTIFICATION_SERVICE) as NotificationManager
+            if (!nm.areNotificationsEnabled()) {
+                println("notifications are disabled in system, not posting reminder")
                 return
             }
 
             val openAppIntent = Intent.makeMainActivity(ComponentName(context, MainActivity::class.java))
             val pendingIntent = PendingIntent.getActivity(context, LAUNCH_APP_REQ_CODE, openAppIntent, PendingIntent.FLAG_IMMUTABLE)
-
-            val nm = context.getSystemService(ComponentActivity.NOTIFICATION_SERVICE) as NotificationManager
             val n = Notification.Builder(context, REMINDER_NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("Reminder to save parking")
                 .setContentText("Don't forget to save your parking location for today!")

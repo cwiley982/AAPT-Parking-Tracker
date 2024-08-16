@@ -1,4 +1,4 @@
-package com.caitlynwiley.aapparkingsaver.ui
+package com.caitlynwiley.aapparkingsaver.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -49,7 +49,7 @@ fun NoLevelSaved(dismiss: () -> Unit) {
             onClick = dismiss
         ) {
             Text(
-                text = "Back",
+                text = "Close",
                 fontSize = 18.sp
             )
         }

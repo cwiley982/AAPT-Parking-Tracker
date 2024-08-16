@@ -1,4 +1,4 @@
-package com.caitlynwiley.aapparkingsaver.ui
+package com.caitlynwiley.aapparkingsaver.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,7 +18,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.caitlynwiley.aapparkingsaver.R
-import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
+import com.caitlynwiley.aapparkingsaver.ui.home.ParkingViewModel
 
 @Composable
 fun DeckFloorPlanView() {

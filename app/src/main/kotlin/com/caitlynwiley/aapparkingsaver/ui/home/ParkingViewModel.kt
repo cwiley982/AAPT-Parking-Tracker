@@ -1,4 +1,4 @@
-package com.caitlynwiley.aapparkingsaver.viewmodel
+package com.caitlynwiley.aapparkingsaver.ui.home
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
@@ -7,20 +7,15 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.caitlynwiley.aapparkingsaver.PermissionsRepo
 import com.caitlynwiley.aapparkingsaver.Prefs
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.CAR_POSITION_SAVED_TS
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.LEVEL_SAVED_TS
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.PARKING_DECK_LEVEL
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.SAVED_CAR_LOCATION_X
-import com.caitlynwiley.aapparkingsaver.Prefs.Companion.SAVED_CAR_LOCATION_Y
+import com.caitlynwiley.aapparkingsaver.Prefs.CAR_POSITION_SAVED_TS
+import com.caitlynwiley.aapparkingsaver.Prefs.LEVEL_SAVED_TS
+import com.caitlynwiley.aapparkingsaver.Prefs.PARKING_DECK_LEVEL
+import com.caitlynwiley.aapparkingsaver.Prefs.SAVED_CAR_LOCATION_X
+import com.caitlynwiley.aapparkingsaver.Prefs.SAVED_CAR_LOCATION_Y
 import com.caitlynwiley.aapparkingsaver.ui.isTimestampFromToday
 import com.caitlynwiley.aapparkingsaver.x
 import com.caitlynwiley.aapparkingsaver.y
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class ParkingViewModel(private val prefs: Prefs): ViewModel() {
     private val _inEditMode = mutableStateOf(false)
@@ -47,11 +42,6 @@ class ParkingViewModel(private val prefs: Prefs): ViewModel() {
     private val _lastUpdatedTimestamp = mutableLongStateOf(prefs.getLong(LEVEL_SAVED_TS, -1L))
     val lastUpdatedTimestamp: State<Long> = _lastUpdatedTimestamp
 
-    private val _hasLocationPerms = MutableStateFlow(false)
-    val hasLocationPerms: StateFlow<Boolean> = _hasLocationPerms
-
-    private val _hasBackgroundLocationPerm = MutableStateFlow(false)
-    val hasBackgroundPerm: StateFlow<Boolean> = _hasBackgroundLocationPerm
 
     /*
     *  Stored car position, relative to the top left point of the floor plan image. Values are stored
@@ -72,18 +62,6 @@ class ParkingViewModel(private val prefs: Prefs): ViewModel() {
         _hasCarPosition.value = isTimestampFromToday(_carPositionSavedTime.longValue)
 
         _showMap.value = _inEditMode.value || _hasCarPosition.value
-
-        viewModelScope.launch {
-            PermissionsRepo.hasLocationPermissions.collect {
-                _hasLocationPerms.emit(it)
-            }
-        }
-
-        viewModelScope.launch {
-            PermissionsRepo.hasBackgroundLocationPermission.collect {
-                _hasBackgroundLocationPerm.emit(it)
-            }
-        }
     }
 
     fun setEditMode(editing: Boolean) {
