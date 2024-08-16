@@ -1,5 +1,6 @@
 package com.caitlynwiley.aapparkingsaver.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Button
@@ -10,9 +11,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.caitlynwiley.aapparkingsaver.Constants
+import com.caitlynwiley.aapparkingsaver.geo.GeofenceReceiver
 import com.caitlynwiley.aapparkingsaver.theme.chooseLevelPrompt
 import com.caitlynwiley.aapparkingsaver.theme.levelOptionsStyle
 import com.caitlynwiley.aapparkingsaver.viewmodel.ParkingViewModel
+import com.google.firebase.Firebase
+import com.google.firebase.database.database
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @Composable
 fun DeckLevelOptions() {
@@ -46,8 +53,21 @@ fun DeckLevelButton(level: Int) {
         colors = ButtonDefaults.buttonColors(containerColor = levelColor),
         onClick = {
             vm.updateParkingLevel(level)
+            trackVehicleInDeck()
         }
     ) {
         BasicText(modifier = Modifier.wrapContentHeight(), text = "$level", style = levelOptionsStyle)
     }
+}
+
+@SuppressLint("SimpleDateFormat")
+private fun trackVehicleInDeck() {
+    val db = Firebase.database
+    val reference = db.getReference("aapt")
+    val p = reference.push()
+    println("key from pushed ref: ${p.key}")
+    val date = Date()
+    val dateString = SimpleDateFormat(Constants.DATE_FORMAT).format(date)
+    val timeString = SimpleDateFormat(Constants.TIME_FORMAT).format(date)
+    p.setValue(GeofenceReceiver.ParkingCounter(1, dateString, timeString))
 }

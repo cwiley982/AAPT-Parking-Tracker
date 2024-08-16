@@ -39,7 +39,5 @@ object PermissionsRepo {
                 == PackageManager.PERMISSION_GRANTED
             )
         }
-
-//        GeofenceManager.setupGeofence(context)
     }
 }
