@@ -110,8 +110,8 @@ object GeofenceManager {
             -78.638841,
             60F // meters
         )
-        .setLoiteringDelay(TimeUnit.MINUTES.toMillis(5).toInt())
-        .setTransitionTypes(ALL_TRANSITION_TYPES)
+        .setLoiteringDelay(TimeUnit.MINUTES.toMillis(2).toInt())
+        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL)
         .setNotificationResponsiveness(30_000)
         .build()
 

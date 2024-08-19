@@ -42,9 +42,8 @@ fun DisplayLevel(level: Int = 0) {
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                val levelTextSize = remember(showMap) { if (showMap) 300.sp else 360.sp }
+                val levelTextSize = remember(showMap) { if (showMap) 240.sp else 360.sp }
 
-                @Suppress("DEPRECATION")
                 Text(
                     text = "$level",
                     fontSize = levelTextSize,

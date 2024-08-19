@@ -41,7 +41,6 @@ class SettingsViewModel: ViewModel() {
         PermissionsRepo.setLocationPermissionsRequired(enabled)
 
         GeofenceManager.setGeofenceEnabled(enabled)
-        // setting up geofence is taken care of in GeofenceManager by collecting the necessary flows
 
         // todo: also need to request permission to post notifications
     }

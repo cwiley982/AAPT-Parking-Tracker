@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,11 +29,16 @@ fun SettingsScreen() {
         val darkModeEnabled by vm.useDarkMode.collectAsState()
         val useParkingReminders by vm.useParkingReminders.collectAsState()
 
+        val textColor = LocalContentColor.current
+        // "Inoperable states are de-emphasized by reducing the enabled state to 38% opacity."
+        val disabledTextColor = textColor.copy(alpha = 0.62f)
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 modifier = Modifier.weight(1f),
                 text = "Follow system theme",
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = textColor
             )
             Switch(checked = useSystemTheme, onCheckedChange = { ThemeRepository.setFollowSystemTheme(it) })
         }
@@ -41,7 +47,8 @@ fun SettingsScreen() {
             Text(
                 modifier = Modifier.weight(1f),
                 text = "Use dark theme",
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = if (useSystemTheme) disabledTextColor else textColor
             )
             Switch(checked = darkModeEnabled, onCheckedChange = { ThemeRepository.setDarkModeEnabled(it) }, enabled = !useSystemTheme)
         }
@@ -50,7 +57,8 @@ fun SettingsScreen() {
             Text(
                 modifier = Modifier.weight(1f),
                 text = "Enable parking reminders",
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = textColor
             )
             Switch(checked = useParkingReminders, onCheckedChange = { vm.enableParkingReminders(it) })
         }
